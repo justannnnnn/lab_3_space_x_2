@@ -4,28 +4,23 @@
     <title>Space X</title>
     <meta charset="UTF-8" />
 
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="src/index.js" type="module"></script>
     <link href="styles/app.css" rel="stylesheet">
+
 </head>
 
 <body>
-<header>
-    <h1> SpaceX Stats</h1>
-</header>
-    <main class="main">
-        <aside class="aside">
-        <h3>Launches</h3>
-        <div id="listContainer">
 
-        </div>
-        </aside>
-        <content class="content">
-            <div id="map"> </div>
-        </content>
-    </main>
+    <div id="loader">
+        <div class="spinner"></div>
+        <div>Загрузка данных...</div>
+    </div>
+    <div id="error"></div>
 
-<footer>
 
-</footer>
+    <svg id="map" width="900" height="500"></svg>
+    <ul id="launchList"></ul>
 </body>
+
 </html>

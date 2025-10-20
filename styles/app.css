@@ -1,17 +1,84 @@
-.main {
+body {
     display: flex;
+    font-family: Arial, sans-serif;
+    position: relative;
 }
 
-.aside {
-    flex-grow: 0.3;
+#loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
 }
 
-.content {
-    flex-grow: 0.7;
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 6px solid #ccc;
+    border-top-color: #1a73e8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
 }
-#listContainer{
-    height: 300px;
-    overflow: hidden;
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#map {
+    width: 65%;
+    height: 100vh;
+    display: none;
+}
+
+#launchList {
+    width: 35%;
     overflow-y: scroll;
-    border: black 1px solid;
+    max-height: 100vh;
+    border-left: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+}
+
+li {
+    padding: 6px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+li:hover {
+    background: #f0f0f0;
+}
+
+.pad-point {
+    fill: red;
+    opacity: 0.7;
+    transition: 0.2s;
+}
+
+.pad-point.highlight {
+    fill: orange;
+    r: 10 !important;
+    opacity: 1;
+}
+
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 12px;
+    opacity: 0;
 }
