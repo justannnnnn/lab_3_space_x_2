@@ -1,27 +1,33 @@
-import {SpaceX} from "./api/spacex";
-import * as d3 from "d3";
-import * as Geo from './geo.json'
+import { SpaceX } from "./api/spacex.js";
+import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import * as Geo from "./geo.json";
 
-document.addEventListener("DOMContentLoaded", setup)
+document.addEventListener("DOMContentLoaded", setup);
 
-function setup(){
+function setup() {
     const spaceX = new SpaceX();
-    spaceX.launches().then(launches=>{
-        spaceX.launchpad().then(launchpads => {
-            const listContainer = document.getElementById("listContainer")
-            renderLaunches(launches, listContainer, );
-            drawMap(launchpads);
-        })
-    })
+
+    // Загружаем данные без Promise.all
+    spaceX.launchpads().then(launchpads => {
+        spaceX.launches().then(launches => {
+            renderLaunches(launches, launchpads);
+            drawMap(Geo, launchpads, launches);
+        });
+    });
 }
-function renderLaunches(launches, container, launchpads){
+
+/* ========== СПИСОК ЗАПУСКОВ ========== */
+function renderLaunches(launches, launchpads) {
+    const container = document.getElementById("listContainer");
     const list = document.createElement("ul");
+
+    launches.sort((a, b) => a.name.localeCompare(b.name));
 
     launches.forEach(launch => {
         const item = document.createElement("li");
         item.textContent = launch.name;
 
-        // Наведение на элемент списка — подсветка соответствующего launchpad
+        // Подсветка launchpad при наведении на запуск
         item.addEventListener("mouseover", () => {
             d3.selectAll(".pad-point").classed("highlight", false);
             const pad = launchpads.find(p => p.id === launch.launchpad);
@@ -43,22 +49,40 @@ function renderLaunches(launches, container, launchpads){
     container.replaceChildren(list);
 }
 
-function drawMap(launchpads){
-    const width = 640;
-    const height = 480;
-    const margin = {top: 20, right: 10, bottom: 40, left: 100};
-    const svg = d3.select('#map').append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
-    const projection = d3.geoMercator()
-        .scale(70)
-        .center([0,20])
-        .translate([width / 2 - margin.left, height / 2]);
+/* ========== КАРТА ========== */
+function drawMap(worldMap, launchpads) {
+    const width = 900;
+    const height = 500;
+
+    const svg = d3.select("#map").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
     const g = svg.append("g");
-    // Tooltip
+    const projection = d3.geoMercator()
+        .scale(140)
+        .translate([width / 2, height / 1.4]);
+
+    // Отрисовка мира из локального Geo
+    drawWorldMap(projection, g, worldMap);
+    drawLaunchpads(projection, g, launchpads);
+}
+
+/* ========== МИРОВАЯ КАРТА ========== */
+function drawWorldMap(projection, g, worldMap) {
+    const geoPath = d3.geoPath().projection(projection);
+
+    g.selectAll("path")
+        .data(worldMap.features)
+        .enter()
+        .append("path")
+        .attr("d", geoPath)
+        .attr("fill", "#ddd")
+        .attr("stroke", "#999");
+}
+
+/* ========== ТОЧКИ ЗАПУСКОВ ========== */
+function drawLaunchpads(projection, g, launchpads) {
     const tooltip = d3.select("body")
         .append("div")
         .attr("class", "tooltip")
@@ -70,7 +94,6 @@ function drawMap(launchpads){
         .style("pointer-events", "none")
         .style("opacity", 0);
 
-    // Точки launchpads
     g.selectAll(".pad-point")
         .data(launchpads)
         .enter()
@@ -100,3 +123,4 @@ function drawMap(launchpads){
             tooltip.transition().duration(200).style("opacity", 0);
         });
 }
+
