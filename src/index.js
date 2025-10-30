@@ -11,7 +11,7 @@ async function setup() {
     const launches = await spaceX.launches();
 
     // Загружаем мир (локально или с URL)
-    const worldMap = await fetch("src/geo.json").then(r => r.json());
+    const worldMap = await fetch("geo.json").then(r => r.json());
 
     renderLaunches(launches, launchpads);
     drawMap(worldMap, launchpads, launches);
