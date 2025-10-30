@@ -4,43 +4,54 @@ document.addEventListener("DOMContentLoaded", setup);
 
 async function setup() {
   const spaceX = new SpaceX();
+  const loader = document.getElementById("loader");
+  const error = document.getElementById("error");
+
+  console.log("🚀 Инициализация приложения SpaceX Stats...");
 
   try {
-    const loader = document.getElementById("loader");
-    const error = document.getElementById("error");
-
-    // Показываем лоадер
     loader.style.display = "flex";
     error.textContent = "";
 
-    // Загружаем данные
+    console.log("📡 Загружаем площадки (launchpads)...");
     const launchpads = await spaceX.launchpads();
+    console.log(`✅ Загружено площадок: ${launchpads.length}`);
+
+    console.log("🛰️ Загружаем запуски (launches)...");
     const launches = await spaceX.launches();
+    console.log(`✅ Загружено запусков: ${launches.length}`);
+
+    console.log("🌍 Загружаем geo.json (мировая карта)...");
     const worldMap = await fetch("geo.json").then(r => r.json());
+    console.log("✅ Мировая карта загружена успешно!");
 
-    // Рендерим
+    console.log("🧩 Рендерим список запусков...");
     renderLaunches(launches, launchpads);
+    console.log("✅ Список запусков отрисован.");
+
+    console.log("🗺️ Рисуем карту...");
     drawMap(worldMap, launchpads, launches);
+    console.log("✅ Карта отрисована.");
 
-    // ✅ Скрываем лоадер после успешной загрузки
+    // Скрываем лоадер
     loader.style.display = "none";
+    console.log("🎉 Загрузка завершена, лоадер скрыт!");
   } catch (err) {
-    console.error("Ошибка загрузки:", err);
-
-    // Прячем лоадер и показываем сообщение об ошибке
-    document.getElementById("loader").style.display = "none";
-    document.getElementById("error").textContent = "Не удалось загрузить данные 😞";
+    console.error("❌ Ошибка загрузки данных:", err);
+    loader.style.display = "none";
+    error.textContent = "Не удалось загрузить данные 😞";
   }
 }
 
 /* ========== СПИСОК ЗАПУСКОВ ========== */
 function renderLaunches(launches, launchpads) {
+  console.log("📋 Начинаем отрисовку списка запусков...");
   const list = d3.select("#launchList");
-  list.selectAll("li").remove(); // очистим
+  list.selectAll("li").remove();
 
   launches.sort((a, b) => a.name.localeCompare(b.name));
 
-  const items = list.selectAll("li")
+  list.selectAll("li")
     .data(launches)
     .enter()
     .append("li")
@@ -53,17 +64,21 @@ function renderLaunches(launches, launchpads) {
           .filter(p => p.id === pad.id)
           .classed("highlight", true)
           .raise();
+        console.log(`✨ Подсвечена площадка: ${pad.name}`);
       }
     })
     .on("mouseout", () => {
       d3.selectAll(".pad-point").classed("highlight", false);
     });
+
+  console.log("📋 Список запусков успешно отрисован!");
 }
 
 /* ========== КАРТА ========== */
 function drawMap(worldMap, launchpads) {
+  console.log("🌎 Начинаем рисовать карту...");
   const svg = d3.select("#map");
-  svg.selectAll("*").remove(); // очистим карту перед рисованием
+  svg.selectAll("*").remove();
 
   const width = +svg.attr("width");
   const height = +svg.attr("height");
@@ -75,10 +90,12 @@ function drawMap(worldMap, launchpads) {
 
   drawWorldMap(projection, g, worldMap);
   drawLaunchpads(projection, g, launchpads);
+  console.log("🌎 Карта успешно отрисована!");
 }
 
 /* ========== МИРОВАЯ КАРТА ========== */
 function drawWorldMap(projection, g, worldMap) {
+  console.log("🗺️ Отрисовываем мир из geo.json...");
   const geoPath = d3.geoPath().projection(projection);
 
   g.selectAll("path")
@@ -88,10 +105,13 @@ function drawWorldMap(projection, g, worldMap) {
     .attr("d", geoPath)
     .attr("fill", "#ddd")
     .attr("stroke", "#999");
+
+  console.log("🗺️ Мировая карта готова!");
 }
 
 /* ========== ТОЧКИ ЗАПУСКОВ ========== */
 function drawLaunchpads(projection, g, launchpads) {
+  console.log(`📍 Отрисовываем ${launchpads.length} площадок...`);
   const tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
@@ -121,6 +141,7 @@ function drawLaunchpads(projection, g, launchpads) {
       tooltip.html(d.name)
         .style("left", (event.pageX + 10) + "px")
         .style("top", (event.pageY + 10) + "px");
+      console.log(`🛰️ Наведение на площадку: ${d.name}`);
     })
     .on("mousemove", function (event) {
       tooltip
@@ -131,6 +152,9 @@ function drawLaunchpads(projection, g, launchpads) {
       d3.selectAll(".pad-point").classed("highlight", false);
       tooltip.transition().duration(200).style("opacity", 0);
     });
+
+  console.log("📍 Все площадки успешно отрисованы!");
 }
+
 
 
