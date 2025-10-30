@@ -44,12 +44,14 @@ function doOnLoading() {
   loader.style.display = "flex";
   map.style.display = "none";
   launchList.style.display = "none";
+  console.log("Загрузка!");
 }
 
 function doOnSuccess() {
   loader.style.display = "none";
   map.style.display = "block";
   launchList.style.display = "block";
+  console.log("✅ Успех!!!!!");
 }
 
 function doOnError(err) {
