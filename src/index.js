@@ -2,7 +2,7 @@ import { SpaceX } from "./api/spacex.js";
 
 document.addEventListener("DOMContentLoaded", setup);
 
-async function setup() {
+function setup() {
   const spaceX = new SpaceX();
   const loader = document.getElementById("loader");
   const map = document.getElementById("map");
@@ -10,33 +10,46 @@ async function setup() {
   const error = document.getElementById("error");
 
   doOnLoading();
+  console.log("🚀 Загружаем данные через класс SpaceX...");
 
-  try {
-    console.log("🚀 Загружаем данные через класс SpaceX...");
+  // Сначала загружаем launchpads
+  spaceX.launchpads()
+    .then(launchpads => {
+      console.log(`✅ Загружено ${launchpads.length} площадок`);
 
-    // ✅ Загружаем данные через твой класс
-    const [launchpads, launches] = await Promise.all([
-      spaceX.launchpads(),
+      // Затем загружаем launches
       spaceX.launches()
-    ]);
+        .then(launches => {
+          console.log(`✅ Загружено ${launches.length} запусков`);
 
-    console.log(`✅ Загружено ${launchpads.length} площадок и ${launches.length} запусков`);
+          // Затем загружаем карту
+          console.log("🌍 Загружаем world.geojson...");
+          fetch("geo.json")
+            .then(r => r.json())
+            .then(worldMap => {
+              console.log("✅ Мировая карта загружена!");
 
-    // ✅ Загружаем мир (осталось с URL, как раньше)
-    console.log("🌍 Загружаем world.geojson...");
-    const worldMap = await fetch("geo.json").then(r => r.json());
+              doOnSuccess();
 
-    console.log("✅ Мировая карта загружена!");
+              // Отрисовка карты и списка запусков
+              drawMap(worldMap, launchpads, launches);
+            })
+            .catch(err => {
+              console.error("❌ Ошибка при загрузке карты:", err);
+              doOnError(err);
+            });
 
-    doOnSuccess();
+        })
+        .catch(err => {
+          console.error("❌ Ошибка при загрузке запусков:", err);
+          doOnError(err);
+        });
 
-    // ✅ Отрисовка по старой логике
-    drawMap(worldMap, launchpads, launches);
-
-  } catch (err) {
-    console.error("❌ Ошибка при загрузке:", err);
-    doOnError(err);
-  }
+    })
+    .catch(err => {
+      console.error("❌ Ошибка при загрузке площадок:", err);
+      doOnError(err);
+    });
 }
 
 /* ========== СТАДИИ СОСТОЯНИЯ ========== */
