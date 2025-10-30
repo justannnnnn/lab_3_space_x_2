@@ -5,97 +5,90 @@ document.addEventListener("DOMContentLoaded", setup);
 async function setup() {
   const spaceX = new SpaceX();
   const loader = document.getElementById("loader");
+  const map = document.getElementById("map");
+  const launchList = document.getElementById("launchList");
   const error = document.getElementById("error");
 
-  console.log("🚀 Инициализация приложения SpaceX Stats...");
+  doOnLoading();
 
   try {
-    loader.style.display = "flex";
-    error.textContent = "";
+    console.log("🚀 Загружаем данные через класс SpaceX...");
 
-    console.log("📡 Загружаем площадки (launchpads)...");
-    const launchpads = await spaceX.launchpads();
-    console.log(`✅ Загружено площадок: ${launchpads.length}`);
+    // ✅ Загружаем данные через твой класс
+    const [launchpads, launches] = await Promise.all([
+      spaceX.launchpads(),
+      spaceX.launches()
+    ]);
 
-    console.log("🛰️ Загружаем запуски (launches)...");
-    const launches = await spaceX.launches();
-    console.log(`✅ Загружено запусков: ${launches.length}`);
+    console.log(`✅ Загружено ${launchpads.length} площадок и ${launches.length} запусков`);
 
-    console.log("🌍 Загружаем geo.json (мировая карта)...");
+    // ✅ Загружаем мир (осталось с URL, как раньше)
+    console.log("🌍 Загружаем world.geojson...");
     const worldMap = await fetch("geo.json").then(r => r.json());
-    console.log("✅ Мировая карта загружена успешно!");
 
-    console.log("🧩 Рендерим список запусков...");
-    renderLaunches(launches, launchpads);
-    console.log("✅ Список запусков отрисован.");
+    console.log("✅ Мировая карта загружена!");
 
-    console.log("🗺️ Рисуем карту...");
+    doOnSuccess();
+
+    // ✅ Отрисовка по старой логике
     drawMap(worldMap, launchpads, launches);
-    console.log("✅ Карта отрисована.");
 
-    // Скрываем лоадер
-    loader.style.display = "none";
-    console.log("🎉 Загрузка завершена, лоадер скрыт!");
   } catch (err) {
-    console.error("❌ Ошибка загрузки данных:", err);
-    loader.style.display = "none";
-    error.textContent = "Не удалось загрузить данные 😞";
+    console.error("❌ Ошибка при загрузке:", err);
+    doOnError(err);
   }
 }
 
-/* ========== СПИСОК ЗАПУСКОВ ========== */
-function renderLaunches(launches, launchpads) {
-  console.log("📋 Начинаем отрисовку списка запусков...");
-  const list = d3.select("#launchList");
-  list.selectAll("li").remove();
-
-  launches.sort((a, b) => a.name.localeCompare(b.name));
-
-  list.selectAll("li")
-    .data(launches)
-    .enter()
-    .append("li")
-    .text(d => d.name)
-    .on("mouseover", (event, d) => {
-      d3.selectAll(".pad-point").classed("highlight", false);
-      const pad = launchpads.find(p => p.id === d.launchpad);
-      if (pad) {
-        d3.selectAll(".pad-point")
-          .filter(p => p.id === pad.id)
-          .classed("highlight", true)
-          .raise();
-        console.log(`✨ Подсвечена площадка: ${pad.name}`);
-      }
-    })
-    .on("mouseout", () => {
-      d3.selectAll(".pad-point").classed("highlight", false);
-    });
-
-  console.log("📋 Список запусков успешно отрисован!");
+/* ========== СТАДИИ СОСТОЯНИЯ ========== */
+function doOnLoading() {
+  loader.style.display = "flex";
+  map.style.display = "none";
+  launchList.style.display = "none";
 }
 
-/* ========== КАРТА ========== */
-function drawMap(worldMap, launchpads) {
-  console.log("🌎 Начинаем рисовать карту...");
+function doOnSuccess() {
+  loader.style.display = "none";
+  map.style.display = "block";
+  launchList.style.display = "block";
+}
+
+function doOnError(err) {
+  loader.style.display = "none";
+  const error = document.getElementById("error");
+  error.textContent = "Ошибка загрузки данных: " + err.message;
+}
+
+/* ========== ОТРИСОВКА КАРТЫ ========== */
+function drawMap(worldMap, launchpads, launches) {
+  console.log("🌎 Отрисовка карты...");
   const svg = d3.select("#map");
   svg.selectAll("*").remove();
 
+  const g = svg.append("g");
   const width = +svg.attr("width");
   const height = +svg.attr("height");
 
-  const g = svg.append("g");
   const projection = d3.geoMercator()
     .scale(140)
     .translate([width / 2, height / 1.4]);
 
   drawWorldMap(projection, g, worldMap);
   drawLaunchpads(projection, g, launchpads);
-  console.log("🌎 Карта успешно отрисована!");
+  renderLaunchList(launches);
+
+  // Зум, как в старой версии
+  const zoom = d3.zoom()
+    .scaleExtent([1, 8])
+    .on("zoom", (event) => {
+      g.attr("transform", event.transform);
+    });
+
+  svg.call(zoom);
+  console.log("✅ Карта отрисована.");
 }
 
 /* ========== МИРОВАЯ КАРТА ========== */
 function drawWorldMap(projection, g, worldMap) {
-  console.log("🗺️ Отрисовываем мир из geo.json...");
   const geoPath = d3.geoPath().projection(projection);
 
   g.selectAll("path")
@@ -105,13 +98,10 @@ function drawWorldMap(projection, g, worldMap) {
     .attr("d", geoPath)
     .attr("fill", "#ddd")
     .attr("stroke", "#999");
-
-  console.log("🗺️ Мировая карта готова!");
 }
 
 /* ========== ТОЧКИ ЗАПУСКОВ ========== */
 function drawLaunchpads(projection, g, launchpads) {
-  console.log(`📍 Отрисовываем ${launchpads.length} площадок...`);
   const tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
@@ -141,7 +131,6 @@ function drawLaunchpads(projection, g, launchpads) {
       tooltip.html(d.name)
         .style("left", (event.pageX + 10) + "px")
         .style("top", (event.pageY + 10) + "px");
-      console.log(`🛰️ Наведение на площадку: ${d.name}`);
     })
     .on("mousemove", function (event) {
       tooltip
@@ -152,9 +141,31 @@ function drawLaunchpads(projection, g, launchpads) {
       d3.selectAll(".pad-point").classed("highlight", false);
       tooltip.transition().duration(200).style("opacity", 0);
     });
-
-  console.log("📍 Все площадки успешно отрисованы!");
 }
+
+/* ========== СПИСОК ЗАПУСКОВ ========== */
+function renderLaunchList(launches) {
+  const list = d3.select("#launchList");
+  list.selectAll("*").remove();
+
+  launches.sort((a, b) => a.name.localeCompare(b.name));
+
+  list.selectAll("li")
+    .data(launches)
+    .enter()
+    .append("li")
+    .text(d => d.name)
+    .on("mouseover", (e, d) => {
+      d3.selectAll(".pad-point").classed("highlight", false);
+      d3.select(`.pad-point[data-id='${d.launchpad}']`)
+        .classed("highlight", true)
+        .raise();
+    })
+    .on("mouseout", () => {
+      d3.selectAll(".pad-point").classed("highlight", false);
+    });
+}
+
 
 
 
