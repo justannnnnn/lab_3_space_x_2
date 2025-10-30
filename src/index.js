@@ -18,7 +18,7 @@ function setup() {
 
 /* ========== СПИСОК ЗАПУСКОВ ========== */
 function renderLaunches(launches, launchpads) {
-    const container = document.getElementById("listContainer");
+    const container = document.getElementById("launchList");
     const list = document.createElement("ul");
 
     launches.sort((a, b) => a.name.localeCompare(b.name));
