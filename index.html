@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Space X</title>
-    <meta charset="UTF-8" />
+  <meta charset="UTF-8" />
+  <title>Space X</title>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="src/index.js" type="module"></script>
-    <link href="styles/app.css" rel="stylesheet">
+  <link href="styles/app.css" rel="stylesheet">
 
+  <!-- D3 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- Наш JS -->
+  <script type="module" src="src/index.js"></script>
 </head>
-
 <body>
+  <div id="loader">
+    <div class="spinner"></div>
+    <div>Загрузка карты...</div>
+  </div>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <div>Загрузка карты...</div>
-    </div>
-    <div id="error"></div>
+  <div id="error"></div>
 
-
-    <svg id="map" width="900" height="500"></svg>
-    <ul id="launchList"></ul>
+  <svg id="map" width="900" height="500"></svg>
+  <ul id="launchList"></ul>
 </body>
-
 </html>
