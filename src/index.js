@@ -6,17 +6,30 @@ async function setup() {
   const spaceX = new SpaceX();
 
   try {
+    const loader = document.getElementById("loader");
+    const error = document.getElementById("error");
+
+    // Показываем лоадер
+    loader.style.display = "flex";
+    error.textContent = "";
+
     // Загружаем данные
     const launchpads = await spaceX.launchpads();
     const launches = await spaceX.launches();
-
-    // Загружаем мир (локально или с URL)
     const worldMap = await fetch("geo.json").then(r => r.json());
 
+    // Рендерим
     renderLaunches(launches, launchpads);
     drawMap(worldMap, launchpads, launches);
+
+    // ✅ Скрываем лоадер после успешной загрузки
+    loader.style.display = "none";
   } catch (err) {
     console.error("Ошибка загрузки:", err);
+
+    // Прячем лоадер и показываем сообщение об ошибке
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("error").textContent = "Не удалось загрузить данные 😞";
   }
 }
 
